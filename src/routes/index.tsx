@@ -143,7 +143,7 @@ function Landing() {
                 </div>
                 <h3 className="mt-5 font-display text-lg font-semibold">{f.title}</h3>
                 <p className="mt-1.5 text-sm text-muted-foreground">{f.desc}</p>
-                <div className="mt-5 flex items-center justify-between border-t border-white/5 pt-4">
+                <div className="mt-5 flex items-center justify-between border-t border-black/5 pt-4">
                   <span className="font-mono text-[10px] uppercase text-muted-foreground">Status</span>
                   <span className="flex items-center gap-1.5 text-[11px] text-neon-green">
                     <span className="h-1.5 w-1.5 rounded-full bg-neon-green shadow-[0_0_8px_currentColor]" />

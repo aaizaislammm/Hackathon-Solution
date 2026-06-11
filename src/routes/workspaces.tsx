@@ -40,7 +40,7 @@ function Workspaces() {
             </div>
             <h2 className="relative mt-3 font-display text-lg font-semibold">{m.title}</h2>
             <p className="relative mt-1 text-sm text-muted-foreground">{m.client}</p>
-            <div className="relative mt-4 flex items-center justify-between border-t border-white/5 pt-3 text-xs">
+            <div className="relative mt-4 flex items-center justify-between border-t border-black/5 pt-3 text-xs">
               <span className="flex items-center gap-1.5 text-muted-foreground"><FileText className="h-3.5 w-3.5" /> {m.value}</span>
               <span className="flex items-center gap-1.5 text-muted-foreground"><Clock className="h-3.5 w-3.5" /> Updated 12m ago</span>
               <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />

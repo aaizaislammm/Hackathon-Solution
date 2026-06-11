@@ -38,7 +38,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <p className="mt-2 text-sm text-muted-foreground">Something went wrong. Try again.</p>
         <div className="mt-5 flex justify-center gap-2">
           <button onClick={() => { router.invalidate(); reset(); }} className="rounded-md bg-neon-blue/20 px-4 py-2 text-sm font-medium text-neon-cyan neon-border-blue">Retry</button>
-          <a href="/" className="rounded-md border border-white/10 px-4 py-2 text-sm">Home</a>
+          <a href="/" className="rounded-md border border-black/10 px-4 py-2 text-sm">Home</a>
         </div>
       </div>
     </div>
@@ -68,7 +68,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head><HeadContent /></head>
       <body>{children}<Scripts /></body>
     </html>

@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, AlertTriangle, FileText, Download, Send, ShieldCheck, Sparkles } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { CheckCircle2, AlertTriangle, FileText, Download, Send, ShieldCheck, Sparkles, XCircle, ArrowRight } from "lucide-react";
+import { useAnalysisStore } from "@/lib/analysis-store";
 
 export const Route = createFileRoute("/decision")({
   head: () => ({ meta: [{ title: "Final Decision Room — BidPilot AI" }] }),
@@ -7,52 +8,78 @@ export const Route = createFileRoute("/decision")({
 });
 
 function DecisionPage() {
+  const { status, result } = useAnalysisStore();
+  const isComplete = status === "complete" && result !== null;
+
+  if (!isComplete) {
+    return (
+      <div className="space-y-6">
+        <header>
+          <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-neon-cyan">Mission Briefing</span>
+          <h1 className="mt-1 font-display text-2xl font-bold sm:text-3xl">Final Decision Room</h1>
+        </header>
+        <div className="glass-strong flex min-h-[400px] flex-col items-center justify-center rounded-2xl p-10 text-center">
+          <CheckCircle2 className="h-12 w-12 text-neon-green/40" />
+          <p className="mt-4 text-sm text-muted-foreground">No analysis data available yet.</p>
+          <Link to="/workspace" className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-neon-blue to-neon-violet px-4 py-2 text-sm font-semibold text-background">
+            Go to Workspace <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const wp = result.winProbability;
+  const Icon = wp.decision === "NO_GO" ? XCircle : wp.decision === "GO_WITH_CONDITIONS" ? AlertTriangle : CheckCircle2;
+
   return (
     <div className="space-y-6">
       <header>
         <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-neon-cyan">Mission Briefing</span>
         <h1 className="mt-1 font-display text-2xl font-bold sm:text-3xl">Final Decision Room</h1>
-        <p className="mt-1 text-sm text-muted-foreground">All intelligence consolidated. Make the call.</p>
+        <p className="mt-1 text-sm text-muted-foreground">All intelligence consolidated. Make the call on {result.rfpMeta.title}.</p>
       </header>
 
       {/* Verdict + scores */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px_320px]">
-        <div className="glass-strong relative overflow-hidden rounded-2xl p-8 neon-border-green">
+        <div className={`glass-strong relative overflow-hidden rounded-2xl p-8 neon-border-${wp.decisionColor.replace('neon-', '')}`}>
           <div className="absolute inset-x-0 top-0 scan-line" />
           <div className="flex flex-col items-center text-center">
             <div className="font-mono text-[11px] uppercase tracking-[0.3em] text-neon-cyan">AI Recommendation</div>
-            <div className="mt-3 grid h-32 w-32 place-items-center rounded-full bg-neon-green/15 neon-border-green">
-              <CheckCircle2 className="h-14 w-14 text-neon-green" />
+            <div className={`mt-3 grid h-32 w-32 place-items-center rounded-full bg-${wp.decisionColor}/15 neon-border-${wp.decisionColor.replace('neon-', '')}`}>
+              <Icon className={`h-14 w-14 text-${wp.decisionColor}`} />
             </div>
-            <div className="mt-4 font-display text-6xl font-bold text-neon-green text-glow-green">GO</div>
+            <div className={`mt-4 font-display text-5xl font-bold text-${wp.decisionColor}`}>{wp.decisionLabel}</div>
             <p className="mt-3 max-w-md text-[13px] text-muted-foreground">
-              Bid recommended with conditions. Resolve 2 financial documentation gaps before submission.
+              {wp.recommendations[0] || "Review the detailed factors to support this decision."}
             </p>
           </div>
         </div>
 
-        <Stat label="Win Probability" value="76%" color="neon-blue" />
-        <Stat label="Compliance Score" value="78%" color="neon-green" />
+        <Stat label="Win Probability" value={`${wp.score}%`} color={wp.decisionColor} />
+        <Stat label="Compliance Score" value={`${result.complianceScore.score}%`} color="neon-blue" />
       </div>
 
       {/* Strengths / Risks */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Panel title="Main Strengths" icon={ShieldCheck} color="neon-green" items={[
-          "Federal Tax Authority ERP — 2024",
-          "Citizen Identity Wallet pilot — 2025",
-          "ISO 27001 certified delivery",
-          "PMP-certified Project Manager available",
-        ]} />
-        <Panel title="Main Risks" icon={AlertTriangle} color="neon-amber" items={[
-          "Only 2 of 3 similar projects",
-          "Data residency cert pending",
-          "Tight 6-week proposal timeline",
-        ]} />
-        <Panel title="Missing Documents" icon={FileText} color="neon-red" items={[
-          "Audited financial statements (FY22, FY23)",
-          "Signed CVs — Project Manager",
-          "Signed CVs — Tech Lead",
-        ]} />
+        <Panel
+          title="Main Strengths"
+          icon={ShieldCheck}
+          color="neon-green"
+          items={wp.strengths.length > 0 ? wp.strengths : ["No distinct strengths identified from capability library."]}
+        />
+        <Panel
+          title="Main Risks"
+          icon={AlertTriangle}
+          color="neon-amber"
+          items={wp.risks.length > 0 ? wp.risks : ["No significant risks detected in compliance."]}
+        />
+        <Panel
+          title="Missing Documents"
+          icon={FileText}
+          color="neon-red"
+          items={wp.missingDocuments.length > 0 ? wp.missingDocuments : ["No mandatory documents appear to be missing."]}
+        />
       </div>
 
       {/* Next steps */}
@@ -62,37 +89,41 @@ function DecisionPage() {
           <h2 className="font-display text-sm font-semibold">Recommended Next Steps</h2>
         </div>
         <ol className="mt-4 grid gap-3 sm:grid-cols-2">
-          {[
-            "Upload missing audited financial statements (FY22, FY23).",
-            "Refresh signatures on team CVs and re-upload to vault.",
-            "Confirm in-country data residency hosting region.",
-            "Schedule internal review with bid steering committee.",
-          ].map((s, i) => (
+          {wp.recommendations.map((s, i) => (
             <li key={i} className="flex items-start gap-3 rounded-xl bg-surface-1/60 p-3">
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-neon-blue/15 font-mono text-[11px] text-neon-cyan neon-border-blue">{i + 1}</span>
               <span className="text-[13px]">{s}</span>
             </li>
           ))}
+          {wp.recommendations.length === 0 && (
+            <li className="flex items-start gap-3 rounded-xl bg-surface-1/60 p-3">
+              <span className="text-[13px] text-muted-foreground">No specific recommendations. Review the proposal draft.</span>
+            </li>
+          )}
         </ol>
       </div>
 
       {/* Actions */}
       <div className="glass-strong sticky bottom-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4">
         <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-          Pending approval · 3 signatories
+          Pending approval · Mission Control
         </div>
         <div className="flex flex-wrap gap-2">
           <button className="rounded-lg glass px-4 py-2 text-sm font-medium hover:border-neon-cyan/40">
             <Download className="mr-1.5 inline h-3.5 w-3.5" /> Compliance Report
           </button>
-          <button className="rounded-lg glass px-4 py-2 text-sm font-medium hover:border-neon-cyan/40">
-            <Download className="mr-1.5 inline h-3.5 w-3.5" /> Proposal DOCX
-          </button>
+          <Link to="/proposal" className="rounded-lg glass px-4 py-2 text-sm font-medium hover:border-neon-cyan/40">
+            <FileText className="mr-1.5 inline h-3.5 w-3.5" /> View Proposal
+          </Link>
           <button className="rounded-lg bg-neon-amber/20 px-4 py-2 text-sm font-medium text-neon-amber neon-border-amber">
             <Send className="mr-1.5 inline h-3.5 w-3.5" /> Send for Review
           </button>
-          <button className="rounded-lg bg-gradient-to-r from-neon-green to-neon-cyan px-5 py-2 text-sm font-semibold text-background shadow-[0_0_24px_oklch(0.78_0.20_155/0.4)]">
-            <CheckCircle2 className="mr-1.5 inline h-3.5 w-3.5" /> Approve Bid
+          <button className={`rounded-lg bg-gradient-to-r ${wp.decision === "NO_GO" ? "from-neon-red to-orange-500" : "from-neon-green to-neon-cyan"} px-5 py-2 text-sm font-semibold text-background`}>
+            {wp.decision === "NO_GO" ? (
+              <><XCircle className="mr-1.5 inline h-3.5 w-3.5" /> Decline Bid</>
+            ) : (
+              <><CheckCircle2 className="mr-1.5 inline h-3.5 w-3.5" /> Approve Bid</>
+            )}
           </button>
         </div>
       </div>
@@ -105,14 +136,14 @@ function Stat({ label, value, color }: { label: string; value: string; color: st
     <div className={`glass-strong rounded-2xl p-6 neon-border-${color === "neon-cyan" ? "blue" : color.replace("neon-", "")}`}>
       <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">{label}</div>
       <div className={`mt-3 font-display text-5xl font-bold text-${color}`}>{value}</div>
-      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/5">
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/5">
         <div className={`h-full bg-${color}`} style={{ width: value }} />
       </div>
     </div>
   );
 }
 
-function Panel({ title, icon: Icon, color, items }: { title: string; icon: any; color: string; items: string[] }) {
+function Panel({ title, icon: Icon, color, items }: { title: string; icon: React.ComponentType<{ className?: string }>; color: string; items: string[] }) {
   return (
     <div className={`glass-strong rounded-2xl p-5 neon-border-${color === "neon-cyan" ? "blue" : color.replace("neon-", "")}`}>
       <div className="flex items-center gap-2">
@@ -120,8 +151,8 @@ function Panel({ title, icon: Icon, color, items }: { title: string; icon: any; 
         <h3 className="font-display text-sm font-semibold">{title}</h3>
       </div>
       <ul className="mt-3 space-y-2">
-        {items.map(i => (
-          <li key={i} className="flex items-start gap-2 text-[12.5px]">
+        {items.map((i, idx) => (
+          <li key={idx} className="flex items-start gap-2 text-[12.5px]">
             <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-${color}`} />
             <span>{i}</span>
           </li>
