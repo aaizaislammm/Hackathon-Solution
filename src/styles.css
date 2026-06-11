@@ -212,3 +212,12 @@
   border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb:hover { background: oklch(0.45 0.10 245); }
+
+/* Safelist dynamic class names used via template literals */
+@source inline("{bg,text,border}-neon-{blue,cyan,green,amber,red,violet}");
+@source inline("{bg,text}-neon-{blue,cyan,green,amber,red,violet}/{5,10,15,20,25,30,40,50,60}");
+@source inline("border-neon-{blue,cyan,green,amber,red,violet}/{20,30,40,50,60}");
+@source inline("neon-border-{blue,green,amber,red}");
+@source inline("from-neon-{blue,cyan,green,amber,red,violet}");
+@source inline("to-neon-{blue,cyan,green,amber,red,violet}");
+@source inline("via-neon-{blue,cyan,green,amber,red,violet}");
